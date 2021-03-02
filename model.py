@@ -11,19 +11,16 @@ from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.convolutional import UpSampling2D, Conv2D, MaxPooling2D ,Conv2DTranspose
 from keras.models import Sequential, Model, load_model
 from keras.optimizers import Adam
-import datetime
-import matplotlib.pyplot as plt
-import sys
-from data_loader import DataLoader
-import numpy as np
-import os
-
-
 from keras.layers import Layer, InputSpec
 from keras import initializers, regularizers, constraints
 from keras import backend as K
- 
- 
+import datetime
+import matplotlib.pyplot as plt
+import sys
+import numpy as np
+import os
+
+from data_loader import DataLoader
 
 
 class CycleGAN_Unetplus_loss():
@@ -36,8 +33,10 @@ class CycleGAN_Unetplus_loss():
 
         # Configure data loader
         self.data_loader = DataLoader(img_res=(self.img_rows, self.img_cols))
-
-
+        
+        self.result_model_dir = "cycle_Unet++_loss_result/models/"
+        self.result_image_dir = "cycle_Unet++_loss_result/images/"
+        
         # Calculate output shape of D (PatchGAN)
         patch = int(self.img_rows / 2**4)
         self.disc_patch = (patch, patch, 1)
@@ -49,7 +48,8 @@ class CycleGAN_Unetplus_loss():
         # Loss weights
         self.lambda_cycle = 10.0                    # Cycle-consistency loss
         self.lambda_id = 0.1 * self.lambda_cycle    # Identity loss
-        self.lambda_fr = 0.1 * self.lambda_cycle   #fake reconstr 生成重建 loss
+        self.lambda_syn = 20                        # Synthesized loss
+        self.lambda_fr = 10                         #fake reconstr loss
 
         optimizer = Adam(0.0002, 0.5)
 
@@ -69,10 +69,10 @@ class CycleGAN_Unetplus_loss():
         #-------------------------
 
         # Build the generators
-        # self.g_AB = self.build_generator()
-        # self.g_BA = self.build_generator()
-        self.g_AB = load_model("cycle_Unet++_loss_result/models/generatorAB40.h5", custom_objects = {"InstanceNormalization": InstanceNormalization})
-        self.g_BA = load_model("cycle_Unet++_loss_result/models/generatorBA40.h5", custom_objects = {"InstanceNormalization": InstanceNormalization})
+        self.g_AB = self.build_generator()
+        self.g_BA = self.build_generator()
+        # self.g_AB = load_model("cycle_Unet++_loss_result/models/generatorAB40.h5", custom_objects = {"InstanceNormalization": InstanceNormalization}) 
+        # self.g_BA = load_model("cycle_Unet++_loss_result/models/generatorBA40.h5", custom_objects = {"InstanceNormalization": InstanceNormalization})
 
         # Input images from both domains
         img_A = Input(shape=self.img_shape)
@@ -103,13 +103,13 @@ class CycleGAN_Unetplus_loss():
                                         reconstr_A, reconstr_B,   #imgs_A, imgs_B,
                                         img_A_id, img_B_id,     #imgs_A, imgs_B,
                                         reconstr_A, reconstr_B ])  #fake_A, fake_B]) 
-        self.combined.compile(loss=['mse', 'mse',             # MSE（L2损失）与MAE（L1损失）
+        self.combined.compile(loss=['mse', 'mse',             # MSE（L2 loss）and MAE（L1 loss）
                                     'mae', 'mae',
                                     'mae', 'mae',
                                     'mae', 'mae',
                                     'mae', 'mae'],
-                            loss_weights=[  1, 1,    
-                                            20, self.lambda_cycle,
+                            loss_weights=[  10, 10,    
+                                            self.lambda_syn, self.lambda_syn,
                                             self.lambda_cycle, self.lambda_cycle,
                                             self.lambda_id, self.lambda_id,
                                             self.lambda_fr, self.lambda_fr ],
@@ -253,7 +253,7 @@ class CycleGAN_Unetplus_loss():
                 #  Train Generators
                 # ------------------
 
-                # Train the generators  #这是真实值
+                # Train the generators  
                 g_loss = self.combined.train_on_batch([imgs_A, imgs_B],
                                                         [valid, valid,
                                                         imgs_A, imgs_B,
@@ -278,18 +278,14 @@ class CycleGAN_Unetplus_loss():
                 if batch_i % sample_interval == 0:
                     self.sample_images(epoch, batch_i)
             if epoch % 20 == 0:
-                os.makedirs('cycle_Unet++_loss_result/models/', exist_ok=True)
-                self.g_BA.save('cycle_Unet++_loss_result/models/generatorBA%d.h5' % (epoch))
-                self.g_AB.save('cycle_Unet++_loss_result/models/generatorAB%d.h5' % (epoch))
+                os.makedirs(self.result_model_dir, exist_ok=True)
+                self.g_BA.save(self.result_model_dir + 'generatorBA%d.h5' % (epoch))
+                self.g_AB.save(self.result_model_dir + 'generatorAB%d.h5' % (epoch))
     def sample_images(self, epoch, batch_i):
-        os.makedirs('cycle_Unet++_loss_result/images/', exist_ok=True)
+        os.makedirs(self.result_image_dir, exist_ok=True)
         r, c = 3, 3
 
         imgs_A, imgs_B = self.data_loader.load_data(batch_size=3, is_testing=True)
-
-        # Demo (for GIF)
-        #imgs_A = self.data_loader.load_img('datasets/apple2orange/testA/n07740461_1541.jpg')
-        #imgs_B = self.data_loader.load_img('datasets/apple2orange/testB/n07749192_4241.jpg')
 
         # Translate images to the other domain
         fake_B = self.g_AB.predict(imgs_A)
@@ -315,7 +311,7 @@ class CycleGAN_Unetplus_loss():
                 axs[i, j].set_title(titles[j])
                 axs[i,j].axis('off')
                 cnt += 1
-        fig.savefig("cycle_Unet++_loss_result/images/%d_%d.png" % (epoch, batch_i))
+        fig.savefig(self.result_image_dir + "%d_%d.png" % (epoch, batch_i))
         plt.close()
 
 
