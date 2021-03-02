@@ -232,7 +232,7 @@ class CycleGAN_Unetplus_loss():
                 # ----------------------
 
                 # Translate images to opposite domain
-                #imgs_B 是infrared imgs_A 是visible
+                #imgs_B for infrared, imgs_A for visible
                 fake_B = self.g_AB.predict(imgs_A)
                 fake_A = self.g_BA.predict(imgs_B)
 
