@@ -116,7 +116,7 @@ class CycleGAN_Unetplus_loss():
                             optimizer=optimizer)
 
 def build_generator(self):
-        """unet_plus_plus Unet++ generator"""
+        """claw， generator"""
 
         inputs = Input(shape = self.img_shape)
         conv0_0 = Conv2D(self.gf, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(inputs)  #kernel_regularizer=tf.keras.regularizers.l1(0.01)
