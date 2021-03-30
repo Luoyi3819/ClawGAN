@@ -23,7 +23,7 @@ import os
 from data_loader import DataLoader
 
 
-class CycleGAN_Unetplus_loss():
+class ClawGAN():
     def __init__(self):
         # Input shape
         self.img_rows = 256
@@ -46,10 +46,10 @@ class CycleGAN_Unetplus_loss():
         self.df = 64
 
         # Loss weights
-        self.lambda_cycle = 10.0                    # Cycle-consistency loss
+        self.lambda_cycle = 20.0                    # Cycle-consistency loss
         self.lambda_id = 0.1 * self.lambda_cycle    # Identity loss
-        self.lambda_syn = 20                        # Synthesized loss
-        self.lambda_fr = 10                         #fake reconstr loss
+        self.lambda_syn = 10                        # Synthesized loss
+        self.lambda_fr = 20                         #fake reconstr loss
 
         optimizer = Adam(0.0002, 0.5)
 
@@ -116,92 +116,66 @@ class CycleGAN_Unetplus_loss():
                             optimizer=optimizer)
 
 def build_generator(self):
-        """claw， generator"""
+        """claw,generator"""
 
         inputs = Input(shape = self.img_shape)
-        conv0_0 = Conv2D(self.gf, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(inputs)  #kernel_regularizer=tf.keras.regularizers.l1(0.01)
-        conv0_0 = Conv2D(self.gf, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(conv0_0)
+        conv1_1 = Conv2D(self.gf, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(inputs)  #kernel_regularizer=tf.keras.regularizers.l1(0.01)
+        conv1_1 = BatchNormalization()conv1_1
+        conv1_2 = Conv2D(self.gf, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(conv1_1)
+        conv1_2 = BatchNormalization()conv1_2
         
-        pool1 = MaxPooling2D(pool_size=(2, 2))(conv0_0)
+        pool1 = MaxPooling2D(pool_size=(2, 2))(conv1_2)
 
-        conv1_0 = Conv2D(self.gf*2, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(pool1)
-        conv1_0 = Conv2D(self.gf*2, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(conv1_0)
+        conv2_1 = Conv2D(self.gf*2, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(pool1)
+        conv2_1 = BatchNormalization()conv2_1
+        conv2_2 = Conv2D(self.gf*2, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(conv2_1)
+        conv2_2 = BatchNormalization()conv2_2
         
-        pool2 = MaxPooling2D(pool_size=(2, 2))(conv1_0)
-
-        up1_0 = Conv2DTranspose(self.gf, (2, 2), strides=(2, 2), padding='same')(conv1_0)
-        merge00_10 = Concatenate()([conv0_0,up1_0])
-        conv0_1 = Conv2D(self.gf, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(merge00_10)
-        conv0_1 = Conv2D(self.gf, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(conv0_1)
+        pool2 = MaxPooling2D(pool_size=(2, 2))(conv2_2)
         
-
-        conv2_0 = Conv2D(self.gf*4, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(pool2)
-        conv2_0 = Conv2D(self.gf*4, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(conv2_0)
+        conv3_1 = Conv2D(self.gf*4, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(pool2)
+        conv3_1 = BatchNormalization()conv3_1
+        conv3_2 = Conv2D(self.gf*4, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(conv3_1)
+        conv3_2 = BatchNormalization()conv3_2
         
-        pool3 = MaxPooling2D(pool_size=(2, 2))(conv2_0)
-
-        up2_0 = Conv2DTranspose(self.gf*2, (2, 2), strides=(2, 2), padding='same')(conv2_0)
-        merge10_20 = Concatenate()([conv1_0,up2_0])
-        conv1_1 = Conv2D(self.gf*2, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(merge10_20)
-        conv1_1 = Conv2D(self.gf*2, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(conv1_1)
+        pool3 = MaxPooling2D(pool_size=(2, 2))(conv3_2)
         
-
-        up1_1 = Conv2DTranspose(self.gf, (2, 2), strides=(2, 2), padding='same')(conv1_1)
-        merge01_11 = Concatenate()([conv0_0,conv0_1,up1_1])
-        conv0_2 = Conv2D(self.gf, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(merge01_11)
-        conv0_2 = Conv2D(self.gf, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(conv0_2)
+        conv4_1 = Conv2D(self.gf*8, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(pool3)
+        conv4_1 = BatchNormalization()conv4_1
+        conv4_2 = Conv2D(self.gf*8, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(conv4_1)
+        conv4_2 = BatchNormalization()conv4_2
         
-
-        conv3_0 = Conv2D(self.gf*8, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(pool3)
-        conv3_0 = Conv2D(self.gf*8, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(conv3_0)
+        deconv3_1 = Conv2DTranspose(self.gf*4, (2, 2), strides=(2, 2), padding='same')(conv4_1)
+        concat3_1 = Concatenate()([conv3_2,deconv3_1])
+        conv3_3 = Conv2D(self.gf*4, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(concat3_1)
+        conv3_3 = BatchNormalization()conv3_3
         
-        pool4 = MaxPooling2D(pool_size=(2, 2))(conv3_0)
-
-        up3_0 = Conv2DTranspose(self.gf*4, (2, 2), strides=(2, 2), padding='same')(conv3_0)
-        merge20_30 = Concatenate()([conv2_0,up3_0])
-        conv2_1 = Conv2D(self.gf*4, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(merge20_30)
-        conv2_1 = Conv2D(self.gf*4, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(conv2_1)
+        deconv2_1 = Conv2DTranspose(self.gf*2, (2, 2), strides=(2, 2), padding='same')(conv3_3)
+        concat2_1 = Concatenate()([conv2_2,deconv2_1])
+        conv2_3 = Conv2D(self.gf*2, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(concat2_1)
+        conv2_3 = BatchNormalization()conv2_3
         
-
-        up2_1 = Conv2DTranspose(self.gf*2, (2, 2), strides=(2, 2), padding='same')(conv2_1)
-        merge11_21 = Concatenate()([conv1_0,conv1_1,up2_1])
-        conv1_2 = Conv2D(self.gf*2, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(merge11_21)
-        conv1_2 = Conv2D(self.gf*2, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(conv1_2)
+        deconv1_1 = Conv2DTranspose(self.gf, (2, 2), strides=(2, 2), padding='same')(conv2_3)
+        concat1_1 = Concatenate()([conv1_2,deconv1_1])
+        conv1_3 = Conv2D(self.gf, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(concat1_1)
+        conv1_3 = BatchNormalization()conv1_3
         
-        up1_2 = Conv2DTranspose(self.gf, (2, 2), strides=(2, 2), padding='same')(conv1_2)
-        merge02_12 = Concatenate()([conv0_0,conv0_1,conv0_2,up1_2])
-        conv0_3 = Conv2D(self.gf, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(merge02_12)
-        conv0_3 = Conv2D(self.gf, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(conv0_3)
+        deconv3_2 = Conv2DTranspose(self.gf*4, (2, 2), strides=(2, 2), padding='same')(conv4_2)
+        concat3_2 = Concatenate()([conv3_3,deconv3_2])
+        conv3_4 = Conv2D(self.gf*4, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(concat3_2)
+        conv3_4 = BatchNormalization()conv3_4
         
-
-        conv4_0 = Conv2D(self.gf*16, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(pool4)
-        conv4_0 = Conv2D(self.gf*16, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(conv4_0)
+        deconv2_2 = Conv2DTranspose(self.gf*2, (2, 2), strides=(2, 2), padding='same')(conv3_4)
+        concat2_2 = Concatenate()([conv2_3,deconv2_2])
+        conv2_4 = Conv2D(self.gf*2, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(concat2_2)
+        conv2_4 = BatchNormalization()conv2_4
         
-
-        up4_0 = Conv2DTranspose(self.gf*8, (2, 2), strides=(2, 2), padding='same')(conv4_0)
-        merge30_40 = Concatenate()([conv3_0,up4_0])
-        conv3_1 = Conv2D(self.gf*8, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(merge30_40)
-        conv3_1 = Conv2D(self.gf*8, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(conv3_1)
-        
-
-        up3_1 = Conv2DTranspose(self.gf*4, (2, 2), strides=(2, 2), padding='same')(conv3_1)
-        merge21_31 = Concatenate()([conv2_0,conv2_1,up3_1])
-        conv2_2 = Conv2D(self.gf*4, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(merge21_31)
-        conv2_2 = Conv2D(self.gf*4, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(conv2_2)
-        
-
-        up2_2 = Conv2DTranspose(self.gf*2, (2, 2), strides=(2, 2), padding='same')(conv2_2)
-        merge12_22 = Concatenate()([conv1_0,conv1_1,conv1_2,up2_2], )
-        conv1_3 = Conv2D(self.gf*2, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(merge12_22)
-        conv1_3 = Conv2D(self.gf*2, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(conv1_3)
-        
-
-        up1_3 = Conv2DTranspose(self.gf, (2, 2), strides=(2, 2), padding='same')(conv1_3)
-        merge03_13 = Concatenate()([conv0_0,conv0_1,conv0_2,conv0_3,up1_3])
-        conv0_4 = Conv2D(self.gf, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(merge03_13)
-        conv0_4 = Conv2D(self.gf, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(conv0_4)
-        
-        output_img = Conv2D(self.channels, kernel_size=4, padding='same', activation='tanh')(conv0_4)
+        deconv1_2 = Conv2DTranspose(self.gf, (2, 2), strides=(2, 2), padding='same')(conv2_4)
+        concat1_2 = Concatenate()([conv1_3,deconv1_2])
+        conv1_4 = Conv2D(self.gf, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal', kernel_regularizer = 'l2')(concat1_2)
+        conv1_4 = BatchNormalization()conv1_4
+                 
+        output_img = Conv2D(self.channels, kernel_size=4, padding='same', activation='tanh')(conv1_4)
         
         return Model(inputs,output_img)
 
@@ -327,6 +301,6 @@ def build_generator(self):
 
 if __name__ == '__main__':
     gan = CycleGAN_Unetplus_loss()
-    gan.train(epochs=200, batch_size=3, sample_interval=20)
+    gan.train(epochs=200, batch_size=1, sample_interval=20)
 
 
